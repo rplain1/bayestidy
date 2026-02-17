@@ -10,11 +10,14 @@ dependencies = [
     "plotnine>=0.15.3",
     "polars>=1.0.0",
     "pyarrow>=23.0.1",
+    "scipy>=1.17.0",
     "xarray>=2023.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "jupyter",
+    "nbformat",
     "pytest>=8.0",
     "pymc>=5.0",
 ]
