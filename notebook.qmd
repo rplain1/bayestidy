@@ -53,7 +53,7 @@ The flagship visualization — density slab + point + intervals, directly from r
 
 (
     ggplot(draws, aes(x="theta", y="school", fill="school"))
-    + bt.stat_halfeye()
+    + bt.stat_halfeye(alpha=0.5)
     + labs(x="theta", y="school")
 )
 ```
