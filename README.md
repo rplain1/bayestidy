@@ -2,7 +2,7 @@
 
 This package is to help data wrangling with `arviz.InferenceData` objects, in the flavor of [tidybayes](https://mjskay.github.io/tidybayes/index.html).
 
-### bayestidy demo
+## bayestidy demo
 
 ``` python
 import arviz as az
