@@ -14,6 +14,7 @@ import pandas as pd
 from plotnine._utils import SIZE_FACTOR, interleave, make_line_segments, to_rgba
 from plotnine.geoms.geom import geom
 from plotnine.geoms.geom_point import geom_point
+from plotnine.geoms.geom_polygon import geom_polygon
 from plotnine.geoms.geom_segment import geom_segment
 from plotnine.stats.stat import stat
 from scipy.stats import gaussian_kde
@@ -198,6 +199,8 @@ class geom_slabinterval(geom):
         "fatten_point": 3,
         "interval_size_range": (1, 3),
     }
+
+    draw_legend = staticmethod(geom_polygon.draw_legend)
 
     def setup_data(self, data: pd.DataFrame) -> pd.DataFrame:
         if "y" not in data.columns:
