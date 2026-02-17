@@ -147,8 +147,8 @@ from raw draws.
 
 ``` python
 (
-    ggplot(draws, aes(x="theta", y="school"))
-    + bt.stat_halfeye()
+    ggplot(draws, aes(x="theta", y="school", fill="school"))
+    + bt.stat_halfeye(alpha=0.5)
     + labs(x="theta", y="school")
 )
 ```
