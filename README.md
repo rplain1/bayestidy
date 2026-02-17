@@ -1,4 +1,8 @@
-# bayestidy demo
+# Tidy Bayesian Analysis, in Python
+
+This package is to help data wrangling with `arviz.InferenceData` objects, in the flavor of [tidybayes](https://mjskay.github.io/tidybayes/index.html).
+
+### bayestidy demo
 
 ``` python
 import arviz as az
@@ -6,7 +10,7 @@ import bayestidy as bt
 from plotnine import *
 ```
 
-## Load data
+### Load data
 
 ArviZ ships pre-fitted models. The “eight schools” dataset has a
 hierarchical model with school-level effects `theta`, a shared mean
@@ -16,7 +20,7 @@ hierarchical model with school-level effects `theta`, a shared mean
 data = az.load_arviz_data("centered_eight")
 ```
 
-## Extract tidy draws
+### Extract tidy draws
 
 `spread_draws` gives one row per draw, with index columns for array
 parameters.
@@ -68,7 +72,7 @@ long.head(10)
 | 0      | 9     | "mu"      | 10.810782 |
 
 
-## Point estimates and intervals
+### Point estimates and intervals
 
 ``` python
 bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
@@ -106,7 +110,7 @@ bt.median_qi(draws, "mu", width=[0.66, 0.95])
 | 4.547775 | -2.260603 | 10.746161 | 0.95   | "median" | "qi"      |
 
 
-## Half-eye plots
+### Half-eye plots
 
 The flagship visualization — density slab + point + intervals, directly
 from raw draws.
@@ -124,7 +128,7 @@ draws_pd["school"] = draws_pd["school"].astype(str)
 
 ![](notebook_files/figure-commonmark/cell-8-output-1.png)
 
-## Eye plots
+### Eye plots
 
 Mirrored density (violin-style) + point + intervals.
 
@@ -138,7 +142,7 @@ Mirrored density (violin-style) + point + intervals.
 
 ![](notebook_files/figure-commonmark/cell-9-output-1.png)
 
-## Point-interval plots
+### Point-interval plots
 
 Just the point estimate and nested credible intervals, no density.
 
@@ -152,7 +156,7 @@ Just the point estimate and nested credible intervals, no density.
 
 ![](notebook_files/figure-commonmark/cell-10-output-1.png)
 
-## Interval plots
+### Interval plots
 
 Nested intervals only.
 
@@ -166,7 +170,7 @@ Nested intervals only.
 
 ![](notebook_files/figure-commonmark/cell-11-output-1.png)
 
-## Pre-summarized data with geom_pointinterval
+### Pre-summarized data with geom_pointinterval
 
 If you’ve already computed summaries with `point_interval`, use the geom
 variants directly.
@@ -210,7 +214,7 @@ summary_pd
 
 ![](notebook_files/figure-commonmark/cell-13-output-1.png)
 
-## Scalar parameters
+### Scalar parameters
 
 ``` python
 scalars_pd = draws.select("mu", "tau").to_pandas()
