@@ -50,11 +50,9 @@ bt.median_qi(draws, "mu", width=[0.66, 0.95])
 The flagship visualization — density slab + point + intervals, directly from raw draws.
 
 ```{python}
-draws_pd = draws.to_pandas()
-draws_pd["school"] = draws_pd["school"].astype(str)
 
 (
-    ggplot(draws_pd, aes(x="theta", y="school"))
+    ggplot(draws, aes(x="theta", y="school"))
     + bt.stat_halfeye()
     + labs(x="theta", y="school")
 )
@@ -66,7 +64,7 @@ Mirrored density (violin-style) + point + intervals.
 
 ```{python}
 (
-    ggplot(draws_pd, aes(x="theta", y="school"))
+    ggplot(draws, aes(x="theta", y="school"))
     + bt.stat_eye()
     + labs(x="theta", y="school")
 )
@@ -78,7 +76,7 @@ Just the point estimate and nested credible intervals, no density.
 
 ```{python}
 (
-    ggplot(draws_pd, aes(x="theta", y="school"))
+    ggplot(draws, aes(x="theta", y="school"))
     + bt.stat_pointinterval()
     + labs(x="theta", y="school")
 )
@@ -90,7 +88,7 @@ Nested intervals only.
 
 ```{python}
 (
-    ggplot(draws_pd, aes(x="theta", y="school"))
+    ggplot(draws, aes(x="theta", y="school"))
     + bt.stat_interval()
     + labs(x="theta", y="school")
 )
@@ -102,14 +100,12 @@ If you've already computed summaries with `point_interval`, use the geom variant
 
 ```{python}
 summary = bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
-summary_pd = summary.to_pandas()
-summary_pd["school"] = summary_pd["school"].astype(str)
-summary_pd
+summary
 ```
 
 ```{python}
 (
-    ggplot(summary_pd, aes(x="theta", xmin=".lower", xmax=".upper", y="school"))
+    ggplot(summary, aes(x="theta", xmin=".lower", xmax=".upper", y="school"))
     + bt.geom_pointinterval()
     + labs(x="theta", y="school")
 )
@@ -118,10 +114,10 @@ summary_pd
 ## Scalar parameters
 
 ```{python}
-scalars_pd = draws.select("mu", "tau").to_pandas()
+scalars= draws.select("mu", "tau")
 
 (
-    ggplot(scalars_pd, aes(x="mu"))
+    ggplot(scalars, aes(x="mu"))
     + bt.stat_halfeye()
     + labs(x="mu")
 )
@@ -129,7 +125,7 @@ scalars_pd = draws.select("mu", "tau").to_pandas()
 
 ```{python}
 (
-    ggplot(scalars_pd, aes(x="tau"))
+    ggplot(scalars, aes(x="tau"))
     + bt.stat_halfeye()
     + labs(x="tau")
 )
