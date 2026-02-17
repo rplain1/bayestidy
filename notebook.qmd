@@ -1,0 +1,136 @@
+---
+title: "bayestidy demo"
+format: gfm
+jupyter: python3
+---
+
+```{python}
+import arviz as az
+import bayestidy as bt
+from plotnine import *
+```
+
+## Load data
+
+ArviZ ships pre-fitted models. The "eight schools" dataset has a hierarchical
+model with school-level effects `theta`, a shared mean `mu`, and scale `tau`.
+
+```{python}
+data = az.load_arviz_data("centered_eight")
+```
+
+## Extract tidy draws
+
+`spread_draws` gives one row per draw, with index columns for array parameters.
+
+```{python}
+draws = bt.spread_draws(data, "theta[school]", "mu", "tau")
+draws.head(10)
+```
+
+`gather_draws` gives long format — handy for comparing variables.
+
+```{python}
+long = bt.gather_draws(data, "mu", "tau")
+long.head(10)
+```
+
+## Point estimates and intervals
+
+```{python}
+bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
+```
+
+```{python}
+bt.median_qi(draws, "mu", width=[0.66, 0.95])
+```
+
+## Half-eye plots
+
+The flagship visualization — density slab + point + intervals, directly from raw draws.
+
+```{python}
+draws_pd = draws.to_pandas()
+draws_pd["school"] = draws_pd["school"].astype(str)
+
+(
+    ggplot(draws_pd, aes(x="theta", y="school"))
+    + bt.stat_halfeye()
+    + labs(x="theta", y="school")
+)
+```
+
+## Eye plots
+
+Mirrored density (violin-style) + point + intervals.
+
+```{python}
+(
+    ggplot(draws_pd, aes(x="theta", y="school"))
+    + bt.stat_eye()
+    + labs(x="theta", y="school")
+)
+```
+
+## Point-interval plots
+
+Just the point estimate and nested credible intervals, no density.
+
+```{python}
+(
+    ggplot(draws_pd, aes(x="theta", y="school"))
+    + bt.stat_pointinterval()
+    + labs(x="theta", y="school")
+)
+```
+
+## Interval plots
+
+Nested intervals only.
+
+```{python}
+(
+    ggplot(draws_pd, aes(x="theta", y="school"))
+    + bt.stat_interval()
+    + labs(x="theta", y="school")
+)
+```
+
+## Pre-summarized data with geom_pointinterval
+
+If you've already computed summaries with `point_interval`, use the geom variants directly.
+
+```{python}
+summary = bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
+summary_pd = summary.to_pandas()
+summary_pd["school"] = summary_pd["school"].astype(str)
+summary_pd
+```
+
+```{python}
+(
+    ggplot(summary_pd, aes(x="theta", xmin=".lower", xmax=".upper", y="school"))
+    + bt.geom_pointinterval()
+    + labs(x="theta", y="school")
+)
+```
+
+## Scalar parameters
+
+```{python}
+scalars_pd = draws.select("mu", "tau").to_pandas()
+
+(
+    ggplot(scalars_pd, aes(x="mu"))
+    + bt.stat_halfeye()
+    + labs(x="mu")
+)
+```
+
+```{python}
+(
+    ggplot(scalars_pd, aes(x="tau"))
+    + bt.stat_halfeye()
+    + labs(x="tau")
+)
+```
