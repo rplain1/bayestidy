@@ -17,7 +17,7 @@ from plotnine.geoms.geom_point import geom_point
 from plotnine.geoms.geom_polygon import geom_polygon
 from plotnine.geoms.geom_segment import geom_segment
 from plotnine.stats.stat import stat
-from scipy.stats import gaussian_kde
+from statsmodels.nonparametric.kde import KDEUnivariate
 
 from bayestidy.point_interval import _compute_interval, _compute_point
 
@@ -53,7 +53,8 @@ class stat_slabinterval(stat):
         "interval": "qi",
         "width": [0.66, 0.95],
         "side": "top",
-        "n": 512,
+        "n": 200,
+        "max_draws": 1000,
         "show_slab": True,
         "show_point": True,
         "show_interval": True,
@@ -72,6 +73,11 @@ class stat_slabinterval(stat):
         group_val = data["group"].iloc[0] if "group" in data.columns else 0
 
         params = self.params
+
+        max_draws = params.get("max_draws", 1000)
+        if len(x) > max_draws:
+            rng = np.random.default_rng(42)
+            x = rng.choice(x, size=max_draws, replace=False)
         side = params.get("side", "top")
         widths = params["width"]
         if isinstance(widths, (int, float)):
@@ -82,9 +88,10 @@ class stat_slabinterval(stat):
 
         # --- slab (density) ---
         if params["show_slab"]:
-            kde = gaussian_kde(x)
-            grid = np.linspace(x.min(), x.max(), params["n"])
-            density = kde(grid)
+            kde = KDEUnivariate(x)
+            kde.fit(bw="scott", fft=True, gridsize=params["n"])
+            grid = kde.support
+            density = kde.density
             max_density = density.max()
             scaled = density / max_density if max_density > 0 else density
 

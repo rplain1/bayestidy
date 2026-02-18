@@ -157,6 +157,7 @@ dependencies = [
     { name = "polars" },
     { name = "pyarrow" },
     { name = "scipy" },
+    { name = "statsmodels" },
     { name = "xarray" },
 ]
 
@@ -180,6 +181,7 @@ requires-dist = [
     { name = "pymc", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "scipy", specifier = ">=1.17.0" },
+    { name = "statsmodels", specifier = ">=0.14.0" },
     { name = "xarray", specifier = ">=2023.0.0" },
 ]
 
