@@ -5,7 +5,7 @@ Python package for tidy Bayesian visualization, mirroring R's tidybayes + ggdist
 ## Stack
 - Polars (not pandas) for data manipulation
 - plotnine for plotting
-- scipy.stats.gaussian_kde for density estimation
+- statsmodels.nonparametric.kde.KDEUnivariate for density estimation
 - uv for dependency management
 
 ## Commands
