@@ -34,15 +34,19 @@ if TYPE_CHECKING:
 # Base stat
 # ---------------------------------------------------------------------------
 
+
 class stat_slabinterval(stat):
     """Compute density + point estimate + interval(s) from raw draws."""
 
     REQUIRED_AES = {"x"}
     DEFAULT_AES = {}
     CREATES = {
-        "density", "scaled",
-        "xmin", "xmax",
-        ".width", "datatype",
+        "density",
+        "scaled",
+        "xmin",
+        "xmax",
+        ".width",
+        "datatype",
         "slab_alpha",
     }
     DEFAULT_PARAMS = {
@@ -98,41 +102,45 @@ class stat_slabinterval(stat):
             # Set `y` so that the y scale covers the full slab extent.
             # The geom uses `y_baseline` for anchoring and `scaled` for shape.
             if side == "bottom":
-                y_slab = y_val - scaled   # spans [y_val-1, y_val]
+                y_slab = y_val - scaled  # spans [y_val-1, y_val]
             elif side == "both":
                 y_slab = y_val + scaled * 0.5  # upper half spans [y_val, y_val+0.5]
             else:  # "top"
-                y_slab = y_val + scaled   # spans [y_val, y_val+1]
+                y_slab = y_val + scaled  # spans [y_val, y_val+1]
 
-            slab_df = pd.DataFrame({
-                "x": grid,
-                "y": y_slab,
-                "y_baseline": y_val,
-                "group": group_val,
-                "density": density,
-                "scaled": scaled,
-                "xmin": np.nan,
-                "xmax": np.nan,
-                ".width": np.nan,
-                "datatype": "slab",
-                "slab_alpha": 1.0,
-            })
+            slab_df = pd.DataFrame(
+                {
+                    "x": grid,
+                    "y": y_slab,
+                    "y_baseline": y_val,
+                    "group": group_val,
+                    "density": density,
+                    "scaled": scaled,
+                    "xmin": np.nan,
+                    "xmax": np.nan,
+                    ".width": np.nan,
+                    "datatype": "slab",
+                    "slab_alpha": 1.0,
+                }
+            )
 
             # For side="both" we also need the y scale to cover the lower half.
             if side == "both":
-                lower_anchor = pd.DataFrame({
-                    "x": [grid[0]],
-                    "y": [y_val - 0.5],
-                    "y_baseline": [y_val],
-                    "group": [group_val],
-                    "density": [0.0],
-                    "scaled": [0.0],
-                    "xmin": [np.nan],
-                    "xmax": [np.nan],
-                    ".width": [np.nan],
-                    "datatype": "slab",
-                    "slab_alpha": [0.0],
-                })
+                lower_anchor = pd.DataFrame(
+                    {
+                        "x": [grid[0]],
+                        "y": [y_val - 0.5],
+                        "y_baseline": [y_val],
+                        "group": [group_val],
+                        "density": [0.0],
+                        "scaled": [0.0],
+                        "xmin": [np.nan],
+                        "xmax": [np.nan],
+                        ".width": [np.nan],
+                        "datatype": "slab",
+                        "slab_alpha": [0.0],
+                    }
+                )
                 slab_df = pd.concat([slab_df, lower_anchor], ignore_index=True)
 
             rows.append(slab_df)
@@ -144,35 +152,39 @@ class stat_slabinterval(stat):
             lower, upper = _compute_interval(x, params["interval"], w)
 
             if params["show_interval"]:
-                interval_df = pd.DataFrame({
+                interval_df = pd.DataFrame(
+                    {
+                        "x": [pt],
+                        "y": [y_val],
+                        "y_baseline": [y_val],
+                        "group": [group_val],
+                        "density": [0.0],
+                        "scaled": [0.0],
+                        "xmin": [lower],
+                        "xmax": [upper],
+                        ".width": [w],
+                        "datatype": "interval",
+                        "slab_alpha": [0.0],
+                    }
+                )
+                rows.append(interval_df)
+
+        if params["show_point"]:
+            point_df = pd.DataFrame(
+                {
                     "x": [pt],
                     "y": [y_val],
                     "y_baseline": [y_val],
                     "group": [group_val],
                     "density": [0.0],
                     "scaled": [0.0],
-                    "xmin": [lower],
-                    "xmax": [upper],
-                    ".width": [w],
-                    "datatype": "interval",
+                    "xmin": [np.nan],
+                    "xmax": [np.nan],
+                    ".width": [np.nan],
+                    "datatype": "point",
                     "slab_alpha": [0.0],
-                })
-                rows.append(interval_df)
-
-        if params["show_point"]:
-            point_df = pd.DataFrame({
-                "x": [pt],
-                "y": [y_val],
-                "y_baseline": [y_val],
-                "group": [group_val],
-                "density": [0.0],
-                "scaled": [0.0],
-                "xmin": [np.nan],
-                "xmax": [np.nan],
-                ".width": [np.nan],
-                "datatype": "point",
-                "slab_alpha": [0.0],
-            })
+                }
+            )
             rows.append(point_df)
 
         if not rows:
@@ -184,6 +196,7 @@ class stat_slabinterval(stat):
 # ---------------------------------------------------------------------------
 # Base geom
 # ---------------------------------------------------------------------------
+
 
 class geom_slabinterval(geom):
     """Draw a density slab + point estimate + interval segments."""
@@ -203,7 +216,7 @@ class geom_slabinterval(geom):
         "na_rm": False,
         "side": "top",
         "scale": 0.9,
-        "fatten_point": 3,
+        "fatten_point": 6,
         "interval_size_range": (1, 3),
     }
 
@@ -251,22 +264,38 @@ class geom_slabinterval(geom):
         # --- Draw slab ---
         if len(slab_data) > 0:
             _draw_slab(
-                slab_data, baseline_y, side, scale,
-                panel_params, coord, ax, params,
+                slab_data,
+                baseline_y,
+                side,
+                scale,
+                panel_params,
+                coord,
+                ax,
+                params,
             )
 
         # --- Draw intervals (wider/thinner behind narrower/thicker) ---
         if len(interval_data) > 0:
             _draw_intervals(
-                interval_data, baseline_y,
-                interval_size_range, panel_params, coord, ax, params,
+                interval_data,
+                baseline_y,
+                interval_size_range,
+                panel_params,
+                coord,
+                ax,
+                params,
             )
 
         # --- Draw point ---
         if len(point_data) > 0:
             _draw_point(
-                point_data, baseline_y, fatten,
-                panel_params, coord, ax, params,
+                point_data,
+                baseline_y,
+                fatten,
+                panel_params,
+                coord,
+                ax,
+                params,
             )
 
 
@@ -348,10 +377,12 @@ def _draw_intervals(
         else:
             lw = max_size * SIZE_FACTOR
 
-        seg_df = pd.DataFrame({
-            "x": [row["xmin"], row["xmax"]],
-            "y": [baseline_y, baseline_y],
-        })
+        seg_df = pd.DataFrame(
+            {
+                "x": [row["xmin"], row["xmax"]],
+                "y": [baseline_y, baseline_y],
+            }
+        )
         seg_df = coord.transform(seg_df, panel_params)
 
         segments = make_line_segments(
@@ -387,12 +418,14 @@ def _draw_point(
     pt["y"] = baseline_y
     pt["size"] = pt["size"] * fatten
     pt["stroke"] = geom_point.DEFAULT_AES.get("stroke", 0.5)
-    geom_point.draw_group(pt, panel_params, coord, ax, params)
+    point_params = {**params, "zorder": params["zorder"] + 2}
+    geom_point.draw_group(pt, panel_params, coord, ax, point_params)
 
 
 # ---------------------------------------------------------------------------
 # Shortcut stats
 # ---------------------------------------------------------------------------
+
 
 class stat_halfeye(stat_slabinterval):
     """Half-eye plot: density slab on top + point + intervals."""
@@ -444,6 +477,7 @@ class stat_interval(stat_slabinterval):
 # Pre-summarized geom shortcuts (stat="identity")
 # ---------------------------------------------------------------------------
 
+
 class geom_pointinterval(geom):
     """Point + intervals from pre-summarized data (e.g. point_interval output).
 
@@ -464,7 +498,7 @@ class geom_pointinterval(geom):
         "stat": "identity",
         "position": "identity",
         "na_rm": False,
-        "fatten_point": 3,
+        "fatten_point": 7,
         "interval_size_range": (1, 3),
     }
 
@@ -491,8 +525,13 @@ class geom_pointinterval(geom):
         baseline_y = data["y"].iloc[0] if "y" in data.columns else 0
 
         _draw_intervals(
-            data, baseline_y, interval_size_range,
-            panel_params, coord, ax, params,
+            data,
+            baseline_y,
+            interval_size_range,
+            panel_params,
+            coord,
+            ax,
+            params,
         )
 
         # Draw point at first row's x
@@ -546,6 +585,11 @@ class geom_interval(geom):
         baseline_y = data["y"].iloc[0] if "y" in data.columns else 0
 
         _draw_intervals(
-            data, baseline_y, interval_size_range,
-            panel_params, coord, ax, params,
+            data,
+            baseline_y,
+            interval_size_range,
+            panel_params,
+            coord,
+            ax,
+            params,
         )
