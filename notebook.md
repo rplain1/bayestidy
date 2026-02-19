@@ -139,13 +139,15 @@ bt.median_qi(draws, "mu", width=[0.66, 0.95])
 ## Half-eye plots
 
 The flagship visualization — density slab + point + intervals, directly
-from raw draws.
+from raw draws. Color and other aesthetics can be mapped to the
+visualization with the grammar of graphics and the tidy data framework.
 
 ``` python
 (
     ggplot(draws, aes(x="theta", y="school", fill="school"))
     + bt.stat_halfeye(alpha=0.5)
     + labs(x="theta", y="school")
+    + theme(legend_position='none')
 )
 ```
 
