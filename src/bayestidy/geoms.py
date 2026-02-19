@@ -364,8 +364,12 @@ def _draw_intervals(
 ):
     from matplotlib.collections import LineCollection
 
-    # Sort by width descending so wider (thinner) intervals are drawn first
-    interval_data = interval_data.sort_values(".width", ascending=False)
+    # Sort by span descending so wider intervals are drawn first (behind narrower ones).
+    # Span (xmax - xmin) is used instead of .width because plotnine drops non-aesthetic
+    # columns before setup_data runs, causing .width to be reset to the default 0.95.
+    interval_data = interval_data.copy()
+    interval_data["_span"] = interval_data["xmax"] - interval_data["xmin"]
+    interval_data = interval_data.sort_values("_span", ascending=False)
     n = len(interval_data)
     min_size, max_size = size_range
 
@@ -417,6 +421,7 @@ def _draw_point(
     pt = point_data.iloc[[0]].copy()
     pt["y"] = baseline_y
     pt["size"] = pt["size"] * fatten
+    pt["fill"] = pt["color"]
     pt["stroke"] = geom_point.DEFAULT_AES.get("stroke", 0.5)
     point_params = {**params, "zorder": params["zorder"] + 2}
     geom_point.draw_group(pt, panel_params, coord, ax, point_params)
