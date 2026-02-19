@@ -60,6 +60,55 @@ def _validate_variable(ds: xr.Dataset, var_name: str) -> None:
         )
 
 
+def _extract_variables_batch(
+    ds: xr.Dataset,
+    var_specs: list[tuple[str, list[str] | None]],
+) -> pl.DataFrame:
+    """Extract multiple variables sharing the same dimension structure in one pass.
+
+    All variables in var_specs must have the same non-chain/draw xarray dimensions
+    (same names and sizes). Builds chain, draw, and index columns once, then
+    appends each variable's values as an additional column — avoiding the per-
+    variable extract-then-join pattern used when variables differ in structure.
+    """
+    first_var, first_dim_names = var_specs[0]
+    da = ds[first_var]
+    value_dims = [d for d in da.dims if d not in ("chain", "draw")]
+
+    chains = ds.coords["chain"].values
+    draws = ds.coords["draw"].values
+    n_chains = len(chains)
+    n_draws = len(draws)
+
+    user_dim_names = first_dim_names if first_dim_names is not None else list(value_dims)
+
+    if not value_dims:
+        data: dict = {
+            "chain": np.repeat(chains, n_draws),
+            "draw": np.tile(draws, n_chains),
+        }
+        for var_name, _ in var_specs:
+            data[var_name] = ds[var_name].values.ravel()
+        return pl.DataFrame(data)
+
+    dim_coords = [ds.coords[d].values for d in value_dims]
+    n_index = int(np.prod([len(c) for c in dim_coords]))
+
+    chain_col = np.repeat(chains, n_draws * n_index)
+    draw_col = np.tile(np.repeat(draws, n_index), n_chains)
+
+    grids = np.meshgrid(*dim_coords, indexing="ij")
+
+    data = {"chain": chain_col, "draw": draw_col}
+    for col_name, grid in zip(user_dim_names, grids):
+        data[col_name] = np.tile(grid.ravel(), n_chains * n_draws)
+
+    for var_name, _ in var_specs:
+        data[var_name] = ds[var_name].values.ravel()
+
+    return pl.DataFrame(data)
+
+
 def _extract_variable(
     ds: xr.Dataset,
     var_name: str,
@@ -81,46 +130,7 @@ def _extract_variable(
             f"({dim_names})."
         )
 
-    chains = ds.coords["chain"].values
-    draws = ds.coords["draw"].values
-    values = da.values  # shape: (n_chains, n_draws, *value_dim_sizes)
-
-    if not value_dims:
-        # Scalar: shape (n_chains, n_draws)
-        return pl.DataFrame({
-            "chain": np.repeat(chains, len(draws)),
-            "draw": np.tile(draws, len(chains)),
-            var_name: values.ravel(),
-        })
-
-    # Array variable: build the full cross-product of chain x draw x indices
-    dim_coords = [ds.coords[d].values for d in value_dims]
-    dim_sizes = [len(c) for c in dim_coords]
-
-    # Total rows = n_chains * n_draws * product(dim_sizes)
-    n_index = int(np.prod(dim_sizes))
-    n_chains = len(chains)
-    n_draws = len(draws)
-    total = n_chains * n_draws * n_index
-
-    # Build chain/draw columns via repeat/tile
-    chain_col = np.repeat(chains, n_draws * n_index)
-    draw_col = np.tile(np.repeat(draws, n_index), n_chains)
-
-    # Build index columns via meshgrid
-    grids = np.meshgrid(*dim_coords, indexing="ij")
-    index_cols = {}
-    actual_dim_names = dim_names if dim_names is not None else list(value_dims)
-    for name, grid in zip(actual_dim_names, grids):
-        index_cols[name] = np.tile(grid.ravel(), n_chains * n_draws)
-
-    data = {
-        "chain": chain_col,
-        "draw": draw_col,
-        **index_cols,
-        var_name: values.ravel(),
-    }
-    return pl.DataFrame(data)
+    return _extract_variables_batch(ds, [(var_name, dim_names)])
 
 
 def spread_draws(
@@ -169,29 +179,50 @@ def spread_draws(
 
     ds = _get_dataset(fit, group)
 
-    # Extract each variable into its own DataFrame
-    var_frames: list[tuple[pl.DataFrame, list[str]]] = []
+    # Parse and validate all variable specs upfront.
+    parsed: list[tuple[str, list[str] | None, tuple[str, ...], tuple[str, ...]]] = []
     for spec in variable_specs:
         var_name, dim_names = _parse_variable_spec(spec)
         _validate_variable(ds, var_name)
-        df = _extract_variable(ds, var_name, dim_names)
-        actual_dims = dim_names if dim_names is not None else [
-            d for d in ds[var_name].dims if d not in ("chain", "draw")
-        ]
-        var_frames.append((df, actual_dims))
+        da = ds[var_name]
+        value_dims = tuple(d for d in da.dims if d not in ("chain", "draw"))
+        if dim_names is not None and len(dim_names) != len(value_dims):
+            raise ValueError(
+                f"Variable '{var_name}' has {len(value_dims)} dimensions "
+                f"({list(value_dims)}), but {len(dim_names)} names were given "
+                f"({dim_names})."
+            )
+        user_names = tuple(dim_names) if dim_names is not None else value_dims
+        parsed.append((var_name, dim_names, value_dims, user_names))
 
-    # Start with the first variable
-    result, _ = var_frames[0]
+    # Group variables by (actual_xarray_dims, dim_sizes, user_output_names).
+    # Variables in the same group share chain/draw/index structure and are
+    # built in one pass — no per-variable extract-then-join needed within a group.
+    groups: dict[tuple, list[tuple[str, list[str] | None]]] = {}
+    group_user_names: dict[tuple, list[str]] = {}
+    for var_name, dim_names, value_dims, user_names in parsed:
+        dim_sizes = tuple(len(ds.coords[d]) for d in value_dims)
+        key = (value_dims, dim_sizes, user_names)
+        if key not in groups:
+            groups[key] = []
+            group_user_names[key] = list(user_names)
+        groups[key].append((var_name, dim_names))
 
-    # Join subsequent variables
-    for df, dims in var_frames[1:]:
+    # Extract each group as a single DataFrame.
+    group_frames: list[tuple[pl.DataFrame, list[str]]] = []
+    for key, var_specs in groups.items():
+        df = _extract_variables_batch(ds, var_specs)
+        group_frames.append((df, group_user_names[key]))
+
+    # Join across groups (only needed when variables have different dim structures,
+    # e.g. a scalar joined onto an array variable).
+    result, _ = group_frames[0]
+    for df, dims in group_frames[1:]:
         join_on = ["chain", "draw"]
-        # Add shared index columns to join key
         shared = [c for c in dims if c in result.columns]
         join_on += shared
         result = result.join(df, on=join_on, how="left")
 
-    # Rename chain/draw to .chain/.draw
     result = result.rename({"chain": ".chain", "draw": ".draw"})
 
     if not chain_index:
