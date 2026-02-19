@@ -30,13 +30,7 @@ draws = bt.spread_draws(data, "theta[school]", "mu", "tau")
 draws.head(10)
 ```
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
+
 <small>shape: (10, 6)</small>
 
 | .chain | .draw | school             | theta     | mu       | tau      |
@@ -53,7 +47,7 @@ draws.head(10)
 | 0      | 1     | "Choate"           | 11.285623 | 3.384554 | 3.908994 |
 | 0      | 1     | "Deerfield"        | 9.129324  | 3.384554 | 3.908994 |
 
-</div>
+
 
 `gather_draws` gives long format — handy for comparing variables.
 
@@ -62,13 +56,7 @@ long = bt.gather_draws(data, "mu", "tau")
 long.head(10)
 ```
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
+
 <small>shape: (10, 4)</small>
 
 | .chain | .draw | .variable | .value    |
@@ -85,7 +73,7 @@ long.head(10)
 | 0      | 8     | "mu"      | 10.425308 |
 | 0      | 9     | "mu"      | 10.810782 |
 
-</div>
+
 
 ## Point estimates and intervals
 
@@ -93,13 +81,7 @@ long.head(10)
 bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
 ```
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
+
 <small>shape: (16, 7)</small>
 
 | school             | theta    | .lower    | .upper    | .width | .point   | .interval |
@@ -117,19 +99,12 @@ bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
 | "Mt. Hermon"       | 4.705673 | 0.040535  | 9.463309  | 0.66   | "median" | "qi"      |
 | "Mt. Hermon"       | 4.705673 | -6.781987 | 16.494705 | 0.95   | "median" | "qi"      |
 
-</div>
+
 
 ``` python
 bt.median_qi(draws, "mu", width=[0.66, 0.95])
 ```
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
 <small>shape: (2, 6)</small>
 
 | mu       | .lower    | .upper    | .width | .point   | .interval |
@@ -138,7 +113,7 @@ bt.median_qi(draws, "mu", width=[0.66, 0.95])
 | 4.547775 | 1.099583  | 7.872792  | 0.66   | "median" | "qi"      |
 | 4.547775 | -2.260603 | 10.746161 | 0.95   | "median" | "qi"      |
 
-</div>
+
 
 ## Half-eye plots
 
@@ -207,13 +182,7 @@ summary = bt.median_qi(draws, "theta", by="school", width=[0.66, 0.95])
 summary
 ```
 
-<div><style>
-.dataframe > thead > tr,
-.dataframe > tbody > tr {
-  text-align: right;
-  white-space: pre-wrap;
-}
-</style>
+
 <small>shape: (16, 7)</small>
 
 | school             | theta    | .lower    | .upper    | .width | .point   | .interval |
@@ -231,7 +200,7 @@ summary
 | "Mt. Hermon"       | 4.705673 | 0.040535  | 9.463309  | 0.66   | "median" | "qi"      |
 | "Mt. Hermon"       | 4.705673 | -6.781987 | 16.494705 | 0.95   | "median" | "qi"      |
 
-</div>
+
 
 ``` python
 (
