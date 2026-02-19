@@ -395,7 +395,7 @@ def _draw_intervals(
             ispath=True,
         )
 
-        color = to_rgba(row["color"], row["alpha"])
+        color = to_rgba(row["color"], 1.0)
 
         coll = LineCollection(
             list(segments),
@@ -422,6 +422,7 @@ def _draw_point(
     pt["y"] = baseline_y
     pt["size"] = pt["size"] * fatten
     pt["fill"] = pt["color"]
+    pt["alpha"] = 1.0
     pt["stroke"] = geom_point.DEFAULT_AES.get("stroke", 0.5)
     point_params = {**params, "zorder": params["zorder"] + 2}
     geom_point.draw_group(pt, panel_params, coord, ax, point_params)
