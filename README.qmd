@@ -1,8 +1,12 @@
 ---
-title: "bayestidy demo"
+title: "Tidy Bayesian Analysis, in Python"
 format: gfm
 jupyter: python3
 ---
+
+This package is to help data wrangling with `arviz.InferenceData` objects, in the flavor of [tidybayes](https://mjskay.github.io/tidybayes/index.html).
+
+All of the dataframes are polars, some of the geom functions convert to pandas internally where required.
 
 ```{python}
 import arviz as az
