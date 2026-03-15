@@ -479,6 +479,20 @@ class stat_interval(stat_slabinterval):
     }
 
 
+class stat_slab(stat_slabinterval):
+    """Density slab only (no point estimate, no intervals).
+
+    Useful for overlaying distributions without interval annotations.
+    """
+
+    DEFAULT_PARAMS = {
+        **stat_slabinterval.DEFAULT_PARAMS,
+        "show_slab": True,
+        "show_point": False,
+        "show_interval": False,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Pre-summarized geom shortcuts (stat="identity")
 # ---------------------------------------------------------------------------

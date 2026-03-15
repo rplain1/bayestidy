@@ -6,6 +6,7 @@ from bayestidy.geoms import (
     stat_halfeye,
     stat_interval,
     stat_pointinterval,
+    stat_slab,
     stat_slabinterval,
 )
 from bayestidy.point_interval import mean_hdi, mean_qi, median_hdi, median_qi, point_interval
@@ -26,5 +27,6 @@ __all__ = [
     "stat_halfeye",
     "stat_interval",
     "stat_pointinterval",
+    "stat_slab",
     "stat_slabinterval",
 ]
