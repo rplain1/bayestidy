@@ -100,6 +100,19 @@ Nested intervals only.
 )
 ```
 
+## Slab plots
+
+Density only — no point estimate or intervals. Useful for overlaying distributions.
+
+```{python}
+(
+    ggplot(draws, aes(x="theta", y="school", fill="school"))
+    + bt.stat_slab(alpha=0.6)
+    + labs(x="theta", y="school")
+    + theme(legend_position='none')
+)
+```
+
 ## Pre-summarized data with geom_pointinterval
 
 If you've already computed summaries with `point_interval`, use the geom variants directly.

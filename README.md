@@ -202,6 +202,22 @@ Nested intervals only.
 
 ![](README_files/figure-commonmark/cell-11-output-1.png)
 
+## Slab plots
+
+Density only — no point estimate or intervals. Useful for overlaying
+distributions.
+
+``` python
+(
+    ggplot(draws, aes(x="theta", y="school", fill="school"))
+    + bt.stat_slab(alpha=0.6)
+    + labs(x="theta", y="school")
+    + theme(legend_position='none')
+)
+```
+
+![](README_files/figure-commonmark/cell-12-output-1.png)
+
 ## Pre-summarized data with geom_pointinterval
 
 If you’ve already computed summaries with `point_interval`, use the geom
@@ -246,7 +262,7 @@ summary
 )
 ```
 
-![](README_files/figure-commonmark/cell-13-output-1.png)
+![](README_files/figure-commonmark/cell-14-output-1.png)
 
 ## Scalar parameters
 
@@ -260,7 +276,7 @@ scalars= draws.select("mu", "tau")
 )
 ```
 
-![](README_files/figure-commonmark/cell-14-output-1.png)
+![](README_files/figure-commonmark/cell-15-output-1.png)
 
 ``` python
 (
@@ -270,4 +286,4 @@ scalars= draws.select("mu", "tau")
 )
 ```
 
-![](README_files/figure-commonmark/cell-15-output-1.png)
+![](README_files/figure-commonmark/cell-16-output-1.png)
